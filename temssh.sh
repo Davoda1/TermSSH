@@ -265,12 +265,29 @@ delete_server() {
   if [[ ! ${SSH_CONFIGS[$server_name]+_} ]]; then
     echo "$(tput bold)$(tput setaf 1)Server not found.$(tput sgr0)"
   else
-    unset SSH_CONFIGS[$server_name]
-    echo "declare -A SSH_CONFIGS" > ~/.config/termssh-manager.conf
-    for key in "${!SSH_CONFIGS[@]}"; do
-      echo "SSH_CONFIGS[$key]='${SSH_CONFIGS[$key]}'" >> ~/.config/termssh-manager.conf
-    done
-    echo "$(tput bold)$(tput setaf 2)Server deleted successfully.$(tput sgr0)"
+    temp_var=${SSH_CONFIGS[$server]}
+    cutservername=$(echo $temp_var | cut -d' ' -f 1)
+    printf "Are you sure you want to delete $(tput bold)$cutservername$(tput sgr0)"
+    if [[ $temp_var = *"-p"* ]]; then 
+      serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+      printf " port: $(tput bold)$serverport$(tput sgr0)"
+    fi
+    printf "? [Y/n]: "
+    read dans
+    if [[ $dans = [Yy] || $dans = [Yy][Ee][Ss] ]]; then
+      unset SSH_CONFIGS[$server_name]
+      echo "declare -A SSH_CONFIGS" > ~/.config/termssh-manager.conf
+      for key in "${!SSH_CONFIGS[@]}"; do
+        echo "SSH_CONFIGS[$key]='${SSH_CONFIGS[$key]}'" >> ~/.config/termssh-manager.conf
+      done
+      echo "$(tput bold)$(tput setaf 2)Server deleted successfully.$(tput sgr0)"
+    else
+      if [[ $dans = [Nn] || $dans = [Nn][Oo] ]]; then
+        echo "$(tput bold)$(tput setaf 1)Canceling server deletion.$(tput sgr0)"
+      else
+        echo "$(tput bold)$(tput setaf 1)Server has not been removed.$(tput sgr0)"
+      fi
+    fi
   fi
 }
 
