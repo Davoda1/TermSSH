@@ -11,7 +11,7 @@ helptext () {
   echo " - 4/d) Delete server."
   echo " - 5/f) Send data via SCP."
   echo " - 6/q) Exit from program."
-  echo " - 0/c) Clear the screan."
+  echo " - 0/c) Clear the screen."
   echo " - h)   Show this help text."
   echo " - l)   Show directory contents."
 }
@@ -329,7 +329,7 @@ while true; do
   echo "| 4/D. Delete server                |"
   echo "| 5/F. Send data via SCP            |"
   echo "| 6/Q. Exit                         |"
-  echo "| 0/C. Clear the screan             |"
+  echo "| 0/C. Clear the screen             |"
   echo "| Enter choice (1/2/3/4/5/6/0):     |"
   echo "*-----------------------------------o"
   printf "$(tput bold)"
