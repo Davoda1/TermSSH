@@ -28,7 +28,7 @@ if [ ! -f ~/.config/termssh-manager.conf ]; then
   read -p "Do you wish to create it now? [Y/n]: " filecreator
   printf "$(tput sgr0)"
   if [[ $filecreator = [Yy] || $filecreator = [Yy][Ee][Ss] ]]; then
-    echo "Config file is created ~/.config/temssh.conf"
+    echo "Config file is created ~/.config/termssh-manager.conf"
     echo "declare -A SSH_CONFIGS" > ~/.config/termssh-manager.conf
   else
     printf "$(tput bold)$(tput setaf 1)The program will close.$(tput sgr0)\n"

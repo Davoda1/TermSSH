@@ -1,6 +1,6 @@
 # TemSSH
 
-This is a bash script for managing, displaying, and connecting to SSH configurations stored in a configuration file at `~/.config/temshh.conf`. The script provides a user-friendly interface to add, remove, and modify the configurations, as well as a list of available configurations and the ability to connect to the selected configuration.
+This is a bash script for managing, displaying, and connecting to SSH configurations stored in a configuration file at `~/.config/termssh-manager.conf`. The script provides a user-friendly interface to add, remove, and modify the configurations, as well as a list of available configurations and the ability to connect to the selected configuration.
 
 ## Requirements
 
