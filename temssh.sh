@@ -9,8 +9,8 @@ helptext () {
   echo " - 2/v) Show all saved server(s)."
   echo " - 3/s) Connect to SSH server."
   echo " - 4/d) Delete server."
-  echo " - 5/q) Exit from program."
-  echo " - 6/f) Send data via SCP."
+  echo " - 5/f) Send data via SCP."
+  echo " - 6/q) Exit from program."
   echo " - 0/c) Clear the screan."
   echo " - h)   Show this help text."
   echo " - l)   Show directory contents."
@@ -88,7 +88,14 @@ show_config() {
     done
     printf "  ($scounter)$(tput sgr0)\n"
     scounter=$((scounter + 1))
-    echo "Config: $(tput bold)${SSH_CONFIGS[$server]}$(tput sgr0)"
+    temp_var=${SSH_CONFIGS[$server]}
+    cutservername=$(echo $temp_var | cut -d' ' -f 1)
+    printf "Config: $(tput bold)$cutservername$(tput sgr0)\n"
+    if [[ $temp_var = *"-p"* ]]; then 
+      serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+      printf "         on port: $(tput bold)$serverport$(tput sgr0)"
+    fi
+    printf "\n"
   done
   echo "$(tput setaf 2)End of list.$(tput sgr0)"
 }
@@ -128,7 +135,14 @@ connect_ssh() {
   if [[ ! ${SSH_CONFIGS[$server_name]+_} ]]; then
     echo "$(tput bold)$(tput setaf 1)Server Not found.$(tput sgr0)"
   else
-    echo "Connecting to $(tput bold)$(tput setaf 2)${SSH_CONFIGS[$server_name]}$(tput sgr0)..."
+    temp_var=${SSH_CONFIGS[$server_name]}
+    cutservername=$(echo $temp_var | cut -d' ' -f 1)
+    printf "Connecting to $(tput bold)$(tput setaf 2)$cutservername$(tput sgr0)"
+    if [[ $temp_var = *"-p"* ]]; then 
+      serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+      printf " on port: $(tput bold)$(tput setaf 2)$serverport$(tput sgr0)"
+    fi
+    printf "...\n"
     echo -n "Are you sure you want to connect? [Y/n]: $(tput bold)"
     read -n 1 confirm
     if [ -z $confirm ]; then printf "$(tput sgr0)$(tput bold)$(tput setaf 1)Field cannot be empty!\n$(tput sgr0)" && confirm="n"; fi
@@ -199,7 +213,14 @@ fileshare_scp() {
     read -p "Path to the location to receive: " freceive
     if [ -z $freceive ]; then printf "$(tput sgr0)$(tput bold)$(tput setaf 1)Field cannot be empty!\n$(tput sgr0)" && return 1; fi
 # Connecting to the server to send data
-    echo "Connecting to $(tput bold)$(tput setaf 2)${SSH_CONFIGS[$server_name]}$(tput sgr0)"
+    temp_var=${SSH_CONFIGS[$server_name]}
+    cutservername=$(echo $temp_var | cut -d' ' -f 1)
+    printf "Connecting to $(tput bold)$(tput setaf 2)$cutservername$(tput sgr0)"
+    if [[ $temp_var = *"-p"* ]]; then 
+      serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+      printf " on port: $(tput bold)$(tput setaf 2)$serverport$(tput sgr0)"
+    fi
+    printf "\n"
     echo "Sending the $(tput bold)$(tput setaf 4)$fsend $dirText$(tput sgr0) to $(tput bold)$(tput setaf 4)$freceive$(tput sgr0)..."
     echo -n "Are you sure you want to continue to send? [Y/n]: $(tput bold)"
     read -n 1 confirm
@@ -207,9 +228,23 @@ fileshare_scp() {
     printf "$(tput sgr0)\n"
     if [[ $confirm = [Yy] ]]; then
       if [ $isSendDir -eq 1 ]; then
-        scp -r $fsend ${SSH_CONFIGS[$server_name]}:$freceive
+        temp_var=${SSH_CONFIGS[$server_name]}
+        cutservername=$(echo $temp_var | cut -d' ' -f 1)
+        if [[ $temp_var = *"-p"* ]]; then 
+          serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+          scp -P $serverport -r $fsend $cutservername:$freceive
+        else
+          scp -r $fsend ${SSH_CONFIGS[$server_name]}:$freceive
+        fi
       else
-        scp $fsend ${SSH_CONFIGS[$server_name]}:$freceive
+        temp_var=${SSH_CONFIGS[$server_name]}
+        cutservername=$(echo $temp_var | cut -d' ' -f 1)
+        if [[ $temp_var = *"-p"* ]]; then 
+          serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+          scp -P $serverport $fsend $cutservername:$freceive
+        else
+          scp $fsend ${SSH_CONFIGS[$server_name]}:$freceive
+        fi
       fi
     else
       echo "$(tput bold)$(tput setaf 1)Cancel sending.$(tput sgr0)"
@@ -292,8 +327,8 @@ while true; do
   echo "| 2/V. Show SSH configuration       |"
   echo "| 3/S. Connect to SSH               |"
   echo "| 4/D. Delete server                |"
-  echo "| 5/Q. Exit                         |"
-  echo "| 6/F. Send data via SCP            |"
+  echo "| 5/F. Send data via SCP            |"
+  echo "| 6/Q. Exit                         |"
   echo "| 0/C. Clear the screan             |"
   echo "| Enter choice (1/2/3/4/5/6/0):     |"
   echo "*-----------------------------------o"
@@ -310,10 +345,10 @@ while true; do
     [Ss]) connect_ssh;;
     4) delete_server;;
     [Dd]) delete_server;;
-    5) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
-    [Qq]) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
-    6) fileshare_scp;;
+    5) fileshare_scp;;
     [Ff]) fileshare_scp;;
+    6) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
+    [Qq]) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
     0) printf '\033[2J\033[3J\033[1;1H';; # Clear screen
     [Cc]) printf '\033[2J\033[3J\033[1;1H';; # Clear screen
     [Hh]) helptext;;
