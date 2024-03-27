@@ -265,7 +265,7 @@ delete_server() {
   if [[ ! ${SSH_CONFIGS[$server_name]+_} ]]; then
     echo "$(tput bold)$(tput setaf 1)Server not found.$(tput sgr0)"
   else
-    temp_var=${SSH_CONFIGS[$server]}
+    temp_var=${SSH_CONFIGS[$server_name]}
     cutservername=$(echo $temp_var | cut -d' ' -f 1)
     printf "Are you sure you want to delete $(tput bold)$cutservername$(tput sgr0)"
     if [[ $temp_var = *"-p"* ]]; then 
