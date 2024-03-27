@@ -268,8 +268,7 @@ delete_server() {
   for server in "${!SSH_CONFIGS[@]}"; do
     rmbox="$rmbox\n$server"
   done
-  echo -n "Select the server you want to delete: $(tput bold)"
-  server_name=$(dialog --backtitle "TUI SSH Manager" --title "Deleting server" --inputbox "Available server(s):\n$rmbox\n\nSelect server:" 12 55 3>&1 1>&2 2>&3 3>&-)
+  server_name=$(dialog --backtitle "TUI SSH Manager" --title "Select the server you want to delete" --inputbox "Available server(s):\n$rmbox\n\nSelect server:" 15 55 3>&1 1>&2 2>&3 3>&-)
   if [ $? -eq 1 ]; then return 0; fi
   if [ -z $server_name ]; then dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "Field cannot be empty!" 6 35 && return 1; fi
 
@@ -278,13 +277,13 @@ delete_server() {
   else
     temp_var=${SSH_CONFIGS[$server_name]}
     cutservername=$(echo $temp_var | cut -d' ' -f 1)
-    confirmbox="Are you sure you want to delete $cutservername"
+    confirmbox="Are you sure you want to delete\n$cutservername"
     if [[ $temp_var = *"-p"* ]]; then 
       serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
-      confirmbox=$confirmbox" port: $serverport"
+      confirmbox=$confirmbox" port: [$serverport]"
     fi
     confirmbox=$confirmbox"?"
-    dialog --backtitle "TUI SSH Manager" --title "Deleting server" --yesno "$confirmbox" 0 55
+    dialog --backtitle "TUI SSH Manager" --title "Deleting server" --yesno "$confirmbox" 7 55
     if [ $? -eq 0 ];then
       dans="yes"
     else
@@ -296,59 +295,14 @@ delete_server() {
       for key in "${!SSH_CONFIGS[@]}"; do
         echo "SSH_CONFIGS[$key]='${SSH_CONFIGS[$key]}'" >> ~/.config/termssh-manager.conf
       done
-      dialog --backtitle "TUI SSH Manager" --title "Deleting server" --msgbox "Server deleted successfully." 0 35
+      dialog --backtitle "TUI SSH Manager" --title "Deleting server" --msgbox "Server deleted successfully." 6 35
     else
       if [[ $dans = [Nn] || $dans = [Nn][Oo] ]]; then
-        dialog --backtitle "TUI SSH Manager" --title "Deleting server" --msgbox "Canceling server deletion." 0 35
+        dialog --backtitle "TUI SSH Manager" --title "Deleting server" --msgbox "Canceling server deletion." 6 35
       else
-        dialog --backtitle "TUI SSH Manager" --title "Deleting server" --msgbox "Server has not been removed." 0 35
+        dialog --backtitle "TUI SSH Manager" --title "Deleting server" --msgbox "Server has not been removed." 6 35
       fi
     fi
-  fi
-}
-
-# Run LS command
-list_folder () {
-  if [ -f /bin/lsd ]; then
-    doesLSD=1
-  else
-    doesLSD=0
-  fi
-  if [ -f /bin/exa ]; then
-    doesEXA=1
-  else
-    doesEXA=0
-  fi
-
-  read -p "$(tput sgr0)Select a folder: $(tput bold)" listfolder
-  if [ ${listfolder:0:1} == '~' ]; then
-    listfolder=$HOME${listfolder:1}
-  fi
-  if [ -z $listfolder ]; then dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "Field cannot be empty!" 6 35 && return 1; fi
-  if ! [[ -d $listfolder ]]; then printf "$(tput sgr0)$(tput bold)$(tput setaf 1)Not valid directory!\n$(tput sgr0)" && return 1; fi
-
-  if [ $doesEXA -eq 1 ]; then
-    if [ $doesLSD -eq 1 ]; then
-      read -p "$(tput sgr0)What program would you like to use (LSD/EXA): $(tput bold)" lister
-      if [[ $lister == [Ee] || $lister == [Ee][Xx][Aa] ]]; then
-        exa -la $listfolder
-        return 0
-      fi
-      if [[ $lister == [Ll] || $lister == [Ll][Ss][Dd] ]]; then
-        lsd -lA $listfolder
-        return 0
-      fi
-      ls -la $listfolder
-      return 0
-    else
-      exa -la $listfolder
-      return 0
-    fi
-    if [ $doesLSD -eq 1 ]; then
-      lsd -lA $listfolder
-      return 0
-    fi
-    ls -la $listfolder
   fi
 }
 
