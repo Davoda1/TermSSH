@@ -377,7 +377,7 @@ x11_ssh() {
     dialog --backtitle "TUI SSH Manager" --title "Connecting..." --yesno "$connectbox" 8 55
     confirm=$?
     if [[ $confirm -eq 0 ]]; then
-      dialog --backtitle "TUI SSH Manager" --title "X11" --yes-label "Trusted (Y)" --no-label "Untrusted (X)" --yesno "What X11 mode do you want to use for connection?" 8 55
+      dialog --backtitle "TUI SSH Manager" --title "X11" --yes-label "Trusted (Y)" --no-label "Untrusted (X)" --defaultno --yesno "What X11 mode do you want to use for connection?" 8 55
       if [ $? -eq 0 ]; then isTrusted="Y"; else isTrusted="X"; fi
       printf '\033[2J\033[3J\033[1;1H'
       ssh -"$isTrusted" ${SSH_CONFIGS[$server_name]}
@@ -387,7 +387,7 @@ x11_ssh() {
 
 # Menu
 while true; do
-  MENUVAR=$(dialog --backtitle "TUI SSH Manager" --title "MENU" --menu "Select an option:" 7 32 0 1 "Setting SSH configuration" \
+  MENUVAR=$(dialog --backtitle "TUI SSH Manager" --title "MENU" --menu "Select an option:" 8 35 0 1 "Setting SSH configuration" \
   2 "Show SSH configuration" 3 "Connect to SSH" 4 "Delete server" 5 "Send data via SCP" 6 "Connect to SSH [X11]" 7 "Exit" 3>&1 1>&2 2>&3 3>&-)
   if [ $? -eq 1 ]; then MENUVAR=7; fi ## Cancel will exit
   printf '\033[2J\033[3J\033[1;1H'
