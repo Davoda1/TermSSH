@@ -10,14 +10,15 @@ dialog --backtitle "TUI SSH Manager" --title "HELP" --msgbox \
 | - 3) Connect to SSH server.                  |\n
 | - 4) Delete server.                          |\n
 | - 5) Send data via SCP.                      |\n
-| - 6) Exit from program.                      |\n
+| - 6) Connect to SSH, use X11 forwarding.     |\n
+| - 7) Exit from program.                      |\n
 |----------------------------------------------|\n
 | You car run the script with                  |\n
 | the '-h' or '--help' flag to see this.       |\n
 |----------------------------------------------|\n
 | You can use the arrow keys,                  |\n
 | tab and enter to use the interface.          |\n
-*----------------------------------------------o\n" 19 55
+*----------------------------------------------o\n" 20 55
 printf '\033[2J\033[3J\033[1;1H'
 dialog --backtitle "TUI SSH Manager" --title "HELP" --yesno "Do you want to continue to the MENU?" 5 55
 tmv=$?
@@ -226,7 +227,7 @@ fileshare_scp() {
       dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "The given PATH to file is INVALID!" 6 35
       return 1
     fi
-    freceive=$(dialog --backtitle "TUI SSH Manager" --title "Path to the location to receive" --inputbox "Sending $fsend [$dirText] to:" 7 55 3>&1 1>&2 2>&3 3>&-)
+    freceive=$(dialog --backtitle "TUI SSH Manager" --title "Path to the location to receive" --inputbox "Sending $fsend [$dirText] to:" 11 55 3>&1 1>&2 2>&3 3>&-)
     if [ $? -eq 1 ]; then return 0; fi
     if [ -z $freceive ]; then dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "Field cannot be empty!" 6 35 && return 1; fi
 # Connecting to the server to send data
@@ -241,7 +242,7 @@ fileshare_scp() {
     scpbox=$scpbox"\n"
     scpbox=$scpbox"Sending the $fsend [$dirText] \n        to $freceive\n"
     scpbox=$scpbox"Are you sure you want to continue to send?"
-    dialog --backtitle "TUI SSH Manager" --title "SCP Fileshare" --yesno "$scpbox" 8 55 3>&1 1>&2 2>&3 3>&-
+    dialog --backtitle "TUI SSH Manager" --title "SCP Fileshare" --yesno "$scpbox" 13 55 3>&1 1>&2 2>&3 3>&-
     confirm=$?
     if [ -z $confirm ]; then dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "Field cannot be empty!" 6 35 && confirm="n"; fi
 
@@ -328,11 +329,67 @@ delete_server() {
   fi
 }
 
+# Connect to server via SSH with X11
+x11_ssh() {
+  connectbox=""
+  isTrusted=""
+  scounter=0
+  stcounter=0
+  maxname_len=0
+  for server in "${!SSH_CONFIGS[@]}"; do
+    if [ $maxname_len -lt ${#server} ]; then maxname_len=${#server}; fi
+  done
+  for server in "${!SSH_CONFIGS[@]}"; do
+    connectbox="$connectbox$server"
+    COUNTER=$((maxname_len - ${#server}))
+    until [ $COUNTER -eq 0 ]; do
+      connectbox=$connectbox" "
+      let COUNTER-=1
+    done
+    connectbox=$connectbox" --- ($scounter)\n"
+    scounter=$((scounter + 1))
+  done
+
+  server_name=$(dialog --backtitle "TUI SSH Manager" --title "Connect to server via SSH w/ X11" --inputbox "Available server(s):\n$connectbox\n\nSelect server:" 18 55 3>&1 1>&2 2>&3 3>&-)
+  if [ $? -eq 1 ]; then return 0; fi
+  if [ -z $server_name ]; then dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "Field cannot be empty!" 6 35 && return 1; fi
+
+  # If the input is a number
+  if [[ "$server_name" =~ ^[0-9]+$ ]]; then
+    for server in "${!SSH_CONFIGS[@]}"; do
+      if [ $stcounter -eq $server_name ]; then server_name=$server && break; fi
+      stcounter=$((stcounter + 1))
+    done
+  fi
+
+  if [[ ! ${SSH_CONFIGS[$server_name]+_} ]]; then
+    dialog --backtitle "TUI SSH Manager" --title "ERROR" --msgbox "Server Not found." 6 35
+  else
+    temp_var=${SSH_CONFIGS[$server_name]}
+    cutservername=$(echo $temp_var | cut -d' ' -f 1)
+    connectbox="Connecting to $cutservername"
+    if [[ $temp_var = *"-p"* ]]; then 
+      serverport=$(echo "${temp_var/-p/"&"}" | cut -d'&' -f 2);
+      connectbox=$connectbox" on port: $serverport"
+    fi
+    connectbox=$connectbox"...\n"
+    connectbox=$connectbox"Are you sure you want to connect?"
+    dialog --backtitle "TUI SSH Manager" --title "Connecting..." --yesno "$connectbox" 8 55
+    confirm=$?
+    if [[ $confirm -eq 0 ]]; then
+      dialog --backtitle "TUI SSH Manager" --title "X11" --yes-label "Trusted (Y)" --no-label "Untrusted (X)" --yesno "What X11 mode do you want to use for connection?" 8 55
+      if [ $? -eq 0 ]; then isTrusted="Y"; else isTrusted="X"; fi
+      printf '\033[2J\033[3J\033[1;1H'
+      ssh -"$isTrusted" ${SSH_CONFIGS[$server_name]}
+    fi
+  fi
+}
+
 # Menu
 while true; do
   MENUVAR=$(dialog --backtitle "TUI SSH Manager" --title "MENU" --menu "Select an option:" 7 32 0 1 "Setting SSH configuration" \
-  2 "Show SSH configuration" 3 "Connect to SSH" 4 "Delete server" 5 "Send data via SCP" 6 "Exit" 3>&1 1>&2 2>&3 3>&-)
-  if [ $? -eq 1 ]; then MENUVAR=6; fi ## Cancel will exit
+  2 "Show SSH configuration" 3 "Connect to SSH" 4 "Delete server" 5 "Send data via SCP" 6 "Connect to SSH [X11]" 7 "Exit" 3>&1 1>&2 2>&3 3>&-)
+  if [ $? -eq 1 ]; then MENUVAR=7; fi ## Cancel will exit
   printf '\033[2J\033[3J\033[1;1H'
   case $MENUVAR in
     1) configure_ssh;; #OK
@@ -340,6 +397,7 @@ while true; do
     3) connect_ssh;;   #OK
     4) delete_server;; #OK
     5) fileshare_scp;; #OK
-    6) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
+    6) x11_ssh;;       #OK
+    7) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
   esac
 done
