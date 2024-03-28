@@ -2,28 +2,50 @@
 
 # Use this to show help information on how to use the script.
 helptext () {
-  dialog --backtitle "TUI SSH Manager" --title "HELP" --msgbox " - The MENU has options from 0 to 6 and the letters.\n - The options are:\n - 1/n) Adding new SSH server.\n - 2/v) Show all saved server(s).\n - 3/s) Connect to SSH server.\n - 4/d) Delete server.\n - 5/f) Send data via SCP.\n - 6/q) Exit from program.\n - 0/c) Clear the screen.\n - h)   Show this help text.\n - l)   Show directory contents." 30 30
+dialog --backtitle "TUI SSH Manager" --title "HELP" --msgbox \
+".----------------------------------------------o\n
+| The MENU options are:                        |\n
+| - 1) Adding new SSH server.                  |\n
+| - 2) Show all saved server(s).               |\n
+| - 3) Connect to SSH server.                  |\n
+| - 4) Delete server.                          |\n
+| - 5) Send data via SCP.                      |\n
+| - 6) Exit from program.                      |\n
+|----------------------------------------------|\n
+| You car run the script with                  |\n
+| the '-h' or '--help' flag to see this.       |\n
+|----------------------------------------------|\n
+| You can use the arrow keys,                  |\n
+| tab and enter to use the interface.          |\n
+*----------------------------------------------o\n" 19 55
+printf '\033[2J\033[3J\033[1;1H'
+dialog --backtitle "TUI SSH Manager" --title "HELP" --yesno "Do you want to continue to the MENU?" 5 55
+tmv=$?
+printf '\033[2J\033[3J\033[1;1H'
+if [ $tmv -eq 1 ]; then exit 0; fi
 }
 
 # Check for the help flags on start.
 if [[ $1 == "-h" || $1 == "--help" ]];then
-  helptext; exit 0
+  helptext
 fi
+
 
 # Check for the existence of the config file, if not create it.
 if [ ! -f ~/.config/termssh-manager.conf ]; then
-  # echo "Configuration file not found, create new file..."
-  echo "$(tput bold)$(tput setaf 255)Configuration file not found, without one being created the program will close."
-  read -p "Do you wish to create it now? [Y/n]: " filecreator
-  printf "$(tput sgr0)"
-  if [[ $filecreator = [Yy] || $filecreator = [Yy][Ee][Ss] ]]; then
-    echo "Config file is created ~/.config/termssh-manager.conf"
+  # Configuration file not found, create new file...
+  configmsgbox="Configuration file not found, without one being created the program will close.\n\nDo you wish to create it now?"
+  dialog --backtitle "TUI SSH Manager" --title "No configuration file found!" --yesno "$configmsgbox" 8 55
+  filecreator=$?
+  if [ $filecreator -eq 0 ]; then
+    dialog --backtitle "TUI SSH Manager" --title "Configuration file created." --msgbox "Config file is created ~/.config/termssh-manager.conf" 6 35
     echo "declare -A SSH_CONFIGS" > ~/.config/termssh-manager.conf
   else
-    printf "$(tput bold)$(tput setaf 1)The program will close.$(tput sgr0)\n"
+    dialog --backtitle "TUI SSH Manager" --title "Configuration file has NOT been created." --msgbox "\nThe program will close." 6 55
     exit 0
   fi
 fi
+
 
 # Load the config file
 source ~/.config/termssh-manager.conf
@@ -317,7 +339,7 @@ while true; do
     2) show_config;;   #OK
     3) connect_ssh;;   #OK
     4) delete_server;; #OK
-    5) fileshare_scp;;
+    5) fileshare_scp;; #OK
     6) printf "$(tput bold)$(tput setaf 2)Closing SSH Manager...$(tput sgr0)\n" && break;;
   esac
 done
